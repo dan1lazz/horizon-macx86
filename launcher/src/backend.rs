@@ -9,7 +9,12 @@ use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 
-pub const REPO: &str = "horizon-rust/horizon";
+/// Where releases are read from: `HORIZON_RELEASE_REPO` (a fork's own `owner/repo`) when the
+/// build sets it, upstream's repository otherwise.
+pub const REPO: &str = match option_env!("HORIZON_RELEASE_REPO") {
+    Some(repo) if !repo.is_empty() => repo,
+    _ => "horizon-rust/horizon",
+};
 pub const README_URL: &str = "https://github.com/horizon-rust/horizon/blob/main/launcher/README.md";
 /// The players' page on connecting an AI agent (the website's docs/agents.md).
 pub const AGENT_DOCS_URL: &str = "https://playhorizon.dev/docs/agents";
@@ -50,11 +55,15 @@ pub struct Release {
 pub const ASSET: Option<&str> = Some("horizon-linux-x86_64.tar.gz");
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 pub const ASSET: Option<&str> = Some("horizon-macos-arm64.zip");
+// Intel Macs (#1161): this fork's own build.
+#[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+pub const ASSET: Option<&str> = Some("horizon-macos-x64.zip");
 #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
 pub const ASSET: Option<&str> = Some("horizon-windows-x64.zip");
 #[cfg(not(any(
     all(target_os = "linux", target_arch = "x86_64"),
     all(target_os = "macos", target_arch = "aarch64"),
+    all(target_os = "macos", target_arch = "x86_64"),
     all(target_os = "windows", target_arch = "x86_64")
 )))]
 pub const ASSET: Option<&str> = None;
@@ -63,11 +72,15 @@ pub const ASSET: Option<&str> = None;
 pub const LAUNCHER_ASSET: Option<&str> = Some("horizon-launcher-linux-x86_64.tar.gz");
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 pub const LAUNCHER_ASSET: Option<&str> = Some("horizon-launcher-macos-arm64.zip");
+// Intel Macs (#1161): this fork's own build.
+#[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+pub const LAUNCHER_ASSET: Option<&str> = Some("horizon-launcher-macos-x64.zip");
 #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
 pub const LAUNCHER_ASSET: Option<&str> = Some("horizon-launcher-windows-x64.zip");
 #[cfg(not(any(
     all(target_os = "linux", target_arch = "x86_64"),
     all(target_os = "macos", target_arch = "aarch64"),
+    all(target_os = "macos", target_arch = "x86_64"),
     all(target_os = "windows", target_arch = "x86_64")
 )))]
 pub const LAUNCHER_ASSET: Option<&str> = None;

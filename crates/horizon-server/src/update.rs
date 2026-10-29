@@ -14,7 +14,12 @@ use std::{
     time::{Duration, Instant},
 };
 
-const REPO: &str = "horizon-rust/horizon";
+/// Where updates are read from: `HORIZON_RELEASE_REPO` (a fork's own `owner/repo`) when the build
+/// sets it, upstream's repository otherwise.
+const REPO: &str = match option_env!("HORIZON_RELEASE_REPO") {
+    Some(repo) if !repo.is_empty() => repo,
+    _ => "horizon-rust/horizon",
+};
 /// The release archives for this computer, most specific first: on Linux the server build (no ALSA or
 /// udev), else the full game (releases before the server build).
 const ASSETS: &[&str] = if cfg!(all(target_os = "linux", target_arch = "x86_64")) {
@@ -24,6 +29,9 @@ const ASSETS: &[&str] = if cfg!(all(target_os = "linux", target_arch = "x86_64")
     ]
 } else if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
     &["horizon-macos-arm64.zip"]
+} else if cfg!(all(target_os = "macos", target_arch = "x86_64")) {
+    // Intel Macs (#1161): this fork's own build.
+    &["horizon-macos-x64.zip"]
 } else if cfg!(all(target_os = "windows", target_arch = "x86_64")) {
     &["horizon-windows-x64.zip"]
 } else {

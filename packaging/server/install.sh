@@ -14,7 +14,7 @@
 # Nothing of Mojang's is downloaded.
 set -eu
 
-REPO=horizon-rust/horizon
+REPO=${HORIZON_RELEASE_REPO:-horizon-rust/horizon}
 VERSION=latest
 DIR="${XDG_DATA_HOME:-$HOME/.local/share}/horizon"
 BIN="$HOME/.local/bin"
@@ -34,9 +34,14 @@ while [ $# -gt 0 ]; do
 done
 
 # The archives to look for, in order: on Linux the server build, else (releases before it) the full game.
-case "$(uname -s)-$(uname -m)" in
+MACHINE=$(uname -m)
+# A shell under Rosetta 2 says x86_64 on Apple Silicon: the native build runs faster there.
+[ "$(uname -s)" = Darwin ] && [ "$(sysctl -n sysctl.proc_translated 2>/dev/null)" = 1 ] && MACHINE=arm64
+case "$(uname -s)-$MACHINE" in
   Linux-x86_64) ASSETS="horizon-server-linux-x86_64.tar.gz horizon-linux-x86_64.tar.gz" ;;
   Darwin-arm64) ASSETS=horizon-macos-arm64.zip ;;
+  # Intel Macs (#1161).
+  Darwin-x86_64) ASSETS=horizon-macos-x64.zip ;;
   *) die "no Horizon release for $(uname -s) $(uname -m) yet: build it from source (docs/server.md)" ;;
 esac
 
